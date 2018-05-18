@@ -14,8 +14,7 @@ type Transaction struct {
 	EndTimestamp   time.Time
 }
 
-func (t *Transaction) StartTrack(uid int) {
-	t.Uid = uid
+func (t *Transaction) StartTrack() {
 	t.Active = true
 	t.StartTimestamp = time.Now()
 }
@@ -32,9 +31,16 @@ func (t Transaction) ComputeDuration() (time.Duration, error) {
 	return t.EndTimestamp.Sub(t.StartTimestamp), nil
 }
 
-func main() {
+func NewTransaction(uid int) Transaction {
 	t1 := Transaction{}
-	t1.StartTrack(1)
+	t1.Uid = uid
+
+	return t1
+}
+
+func main() {
+	t1 := NewTransaction(1)
+	t1.StartTrack()
 	t1.StopTrack()
 
 	result, err := t1.ComputeDuration()
