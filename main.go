@@ -26,7 +26,7 @@ func (t *Transaction) StopTrack() {
 
 func (t Transaction) ComputeDuration() (time.Duration, error) {
 	if t.Active == true {
-		return 0, errors.New("Must stop the tack first")
+		return 0, errors.New("Must stop the track first")
 	}
 	return t.EndTimestamp.Sub(t.StartTimestamp), nil
 }
