@@ -8,22 +8,25 @@ import (
 
 // A Transaction describes a single log
 type Transaction struct {
-	Uid            int
+	UID            int
 	Active         bool
 	StartTimestamp time.Time
 	EndTimestamp   time.Time
 }
 
+// StartTrack : this will start tracking transcation
 func (t *Transaction) StartTrack() {
 	t.Active = true
 	t.StartTimestamp = time.Now()
 }
 
+// StopTrack : this will stop tracking transaction
 func (t *Transaction) StopTrack() {
 	t.Active = false
 	t.EndTimestamp = time.Now()
 }
 
+// ComputeDuration : this will try to compute the duration of a transaction
 func (t Transaction) ComputeDuration() (time.Duration, error) {
 	if t.Active == true {
 		return 0, errors.New("Must stop the track first")
@@ -31,9 +34,10 @@ func (t Transaction) ComputeDuration() (time.Duration, error) {
 	return t.EndTimestamp.Sub(t.StartTimestamp), nil
 }
 
+// NewTransaction : this will create new instance of a transaction
 func NewTransaction(uid int) Transaction {
 	t1 := Transaction{}
-	t1.Uid = uid
+	t1.UID = uid
 
 	return t1
 }
