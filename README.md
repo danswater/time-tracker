@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/danswater/time-tracker.svg?style=svg)](https://circleci.com/gh/danswater/time-tracker)
+
 # Overview
 
 A Time tracker.
