@@ -3,13 +3,13 @@
 -- for an interesting explanation of SQLites datatypes, in particular affinities.
 
 CREATE TABLE IF NOT EXISTS users (
-	Id          INTEGER PRIMARY KEY,
+	Id          INTEGER PRIMARY KEY AUTOINCREMENT,
 	Username    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS transactions (
 	Id               INTEGER PRIMARY KEY,
-	UID              INTEGER
+	UID              INTEGER,
 	Active           INTEGER,
 	StartTimestamp   DATETIME DEFAULT CURRENT_TIMESTAMP,
 	EndTimestamp     DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -17,4 +17,4 @@ CREATE TABLE IF NOT EXISTS transactions (
 	FOREIGN KEY(UID) REFERENCES users(Id));
 
 -- Add default user.
-INSERT INTO users VALUES (1, 'user');
+INSERT INTO users (`Username`) VALUES ('user');
