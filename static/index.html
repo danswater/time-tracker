@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Socket.IO chat</title>
+		<style>
+			* { margin: 0; padding: 0; box-sizing: border-box; }
+			body { font: 13px Helvetica, Arial; }
+			form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+			form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+			form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+			#messages { list-style-type: none; margin: 0; padding: 0; }
+			#messages li { padding: 5px 10px; }
+			#messages li:nth-child(odd) { background: #eee; }
+		</style>
+	</head>
+	<body>
+		<ul id="messages"></ul>
+			<form action="">
+				<button>Start Track</button>
+			</form>
+			<script src="GoTime.js"></script>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+			<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+			<script>
+				$(function () {
+					var socket = io();
+					function generateId () {
+						return Math.floor( Math.random() * 10000000000000 )
+					}
+
+					function newEvent ( EventName, Id, Time, Name ) {
+						var event = {
+							Active         : true,
+							UID            : ( Id || generateId() ),
+							Name           : Name,
+							StartTimestamp : ( Time || GoTime.now() )
+						};
+						var payload = JSON.stringify( event );
+						socket.emit( EventName, payload );
+					}
+
+					$('form').submit(function( e ){
+						e.preventDefault();
+						newEvent( 'EventStopwatchNew', null, GoTime.now(), 'New Stopwatch' )
+
+						socket.on( 'EventStopwatchNew', function( msg ){
+							console.log( msg );
+						} )
+						return false;
+					});
+				});
+		</script>
+	</body>
+</html>
