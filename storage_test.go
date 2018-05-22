@@ -22,3 +22,16 @@ func TestSaveInterval(t *testing.T) {
 		t.Fatal("Id must automatically increment")
 	}
 }
+
+func TestSaveStopwatch( t *testing.T) {
+	stopwatch := Stopwatch{}
+	stopwatch.Color = "#fff"
+	stopwatch.Id = 321321313
+	stopwatch.Name = "Hello"
+
+	intervalId := int64(1)
+	id := SaveStopwatch( stopwatch, intervalId)
+	if id == 0 {
+		t.Fatal("Id must automatically increment")
+	}
+}

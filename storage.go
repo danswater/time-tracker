@@ -63,8 +63,23 @@ func SaveInterval(interval Interval) int64 {
 	return id;
 }
 
-func SavePool(pool Pool) {
+func SaveStopwatch(stopwatch Stopwatch, intervalId int64) int64 {
+	statement, err := database.Prepare("INSERT INTO stopwatches (Color, Id, IntervalId, Name) VALUES (?,?,?,?)")
+	if err != nil {
+		log.Fatal("Invalid insert query", err)
+	}
 
+	color := stopwatch.Color
+	sid := stopwatch.Id
+	name := stopwatch.Name
+	log.Println("Saving stopwatch", stopwatch)
+	res, err := statement.Exec(color, sid, intervalId, name)
+	if err != nil {
+		log.Panic("Unable to save stopwatch", err)
+	}
+
+	id, _ := res.LastInsertId()
+	return id;
 }
 
 
