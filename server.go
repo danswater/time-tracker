@@ -60,7 +60,7 @@ func SocketHandler(so socketio.Socket) {
 		event := Event{}
 		json.Unmarshal([]byte(msg), &event)
 
-		if event.Payload == "New" {
+		if event.Payload == "NEW" {
 			// send poolNew
 			unix := time.Now().Unix()
 			poolData := PoolData{}
@@ -74,22 +74,17 @@ func SocketHandler(so socketio.Socket) {
 			pool.PoolKey = randomString()
 			pool.PoolKeyReadOnly = randomString()
 
+			SavePool(pool)
+
 			res, _ := json.Marshal(pool)
 			so.Emit("poolNew", string(res))
 			so.BroadcastTo("Stopwatch", "poolNew", string(res))
 		} else {
-			// send poolNew
-			unix := time.Now().Unix()
-			poolData := PoolData{}
-			poolData.CreationDate = unix
-			poolData.LastModDate = unix
+			p := Pool{}
+			p.PoolKey = event.Payload
 
-			pool := Pool{}
+			pool := LoadPool(p)
 			pool.EventName = "subscribeAccepted"
-			pool.IsReadOnly = false
-			pool.PoolData = poolData
-			pool.PoolKey = randomString()
-			pool.PoolKeyReadOnly = randomString()
 
 			res, _ := json.Marshal(pool)
 			so.Emit( "subscribeAccepted", string(res))

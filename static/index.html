@@ -69,6 +69,7 @@
 
 					function handleSubscribeAccepted ( msg ) {
 						var pool = JSON.parse( msg );
+						console.log( pool );
 						if ( pool.PoolData.Stopwatches ) {
 							var data = pool.PoolData.Stopwatches[ 0 ];
 							i( data, GoTime.now() );

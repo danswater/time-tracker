@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"testing"
+	"time"
 )
 
 func TestMain(m *testing.M) {
@@ -34,4 +35,44 @@ func TestSaveStopwatch( t *testing.T) {
 	if id == 0 {
 		t.Fatal("Id must automatically increment")
 	}
+}
+
+func TestSavePoolData( t *testing.T) {
+	pd := PoolData{}
+	pd.CreationDate = 312313123
+	pd.LastModDate = 321321313
+
+	stopwatchId := int64(1)
+
+	id := SavePoolData( pd, &stopwatchId)
+	if id == 0 {
+		t.Fatal("Id must automatically increment")
+	}
+}
+
+func TestSavePool( t *testing.T) {
+	// send poolNew
+	unix := time.Now().Unix()
+	pd := PoolData{}
+	pd.CreationDate = unix
+	pd.LastModDate = unix
+
+	pool := Pool{}
+	pool.EventName = "poolNew"
+	pool.IsReadOnly = false
+	pool.PoolData = pd
+	pool.PoolKey = "dasdas3123"
+	pool.PoolKeyReadOnly = "dsadsdasd43"
+
+	SavePool(pool)
+}
+
+func TestLoadPool( t *testing.T) {
+	pool := Pool{}
+	pool.EventName = "poolNew"
+	pool.IsReadOnly = false
+	pool.PoolKey = "dasdas3123"
+	pool.PoolKeyReadOnly = "dsadsdasd43"
+
+	LoadPool(pool)
 }
