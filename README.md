@@ -12,3 +12,6 @@ I will be guided by the following principles
 - Be pragmatic about testing,but try to test everything
 - Do not over-engineer
 
+## Goals
+- [x] Timer should continue to run even if user click refresh
+- [ ] Timer should sync with other devices when given same link

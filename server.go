@@ -67,6 +67,8 @@ func SocketHandler(so socketio.Socket) {
 			poolData.CreationDate = unix
 			poolData.LastModDate = unix
 
+			poolDataId := CreatePoolData(poolData, nil)
+
 			pool := Pool{}
 			pool.EventName = "poolNew"
 			pool.IsReadOnly = false
@@ -74,7 +76,7 @@ func SocketHandler(so socketio.Socket) {
 			pool.PoolKey = randomString()
 			pool.PoolKeyReadOnly = randomString()
 
-			SavePool(pool)
+			CreatePool(pool, poolDataId)
 
 			res, _ := json.Marshal(pool)
 			so.Emit("poolNew", string(res))
@@ -104,6 +106,8 @@ func SocketHandler(so socketio.Socket) {
 		interval := Interval{}
 		interval.StartTime = event.Time
 
+		intervalId := SaveInterval(interval)
+
 		intervals = append( intervals, interval )
 
 		stopwatches := make([]Stopwatch, 0, 16)
@@ -114,20 +118,22 @@ func SocketHandler(so socketio.Socket) {
 		stopwatch.Name = event.Name
 		stopwatch.Intervals = intervals
 
+		stopwatchId := SaveStopwatch(stopwatch, intervalId)
+
 		stopwatches = append( stopwatches, stopwatch )
 
 		unix := time.Now().Unix()
 		poolData := PoolData{}
-		poolData.CreationDate = unix
 		poolData.LastModDate = unix
 		poolData.Stopwatches = stopwatches
 
-		pool := Pool{}
+		p := Pool{}
+		p.PoolKey = event.Payload
+
+		UpdatePoolData(p, poolData, &stopwatchId)
+
+		pool := LoadPool(p)
 		pool.EventName = "poolChanged"
-		pool.IsReadOnly = false
-		pool.PoolData = poolData
-		pool.PoolKey = randomString()
-		pool.PoolKeyReadOnly = randomString()
 
 		res, _ := json.Marshal(pool)
 

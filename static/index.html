@@ -48,7 +48,7 @@
 
 					function handleForm ( e ) {
 						e.preventDefault();
-						newEvent( 'stopwatchNew', null, GoTime.now(), 'New Stopwatch', null, '#FF0000' );
+						newEvent( 'stopwatchNew', null, GoTime.now(), 'New Stopwatch', getCookie( cookieKey ), '#FF0000' );
 						return false;
 					}
 

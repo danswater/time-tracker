@@ -37,20 +37,7 @@ func TestSaveStopwatch( t *testing.T) {
 	}
 }
 
-func TestSavePoolData( t *testing.T) {
-	pd := PoolData{}
-	pd.CreationDate = 312313123
-	pd.LastModDate = 321321313
-
-	stopwatchId := int64(1)
-
-	id := SavePoolData( pd, &stopwatchId)
-	if id == 0 {
-		t.Fatal("Id must automatically increment")
-	}
-}
-
-func TestSavePool( t *testing.T) {
+func TestCreatePool( t *testing.T) {
 	// send poolNew
 	unix := time.Now().Unix()
 	pd := PoolData{}
@@ -64,7 +51,45 @@ func TestSavePool( t *testing.T) {
 	pool.PoolKey = "dasdas3123"
 	pool.PoolKeyReadOnly = "dsadsdasd43"
 
-	SavePool(pool)
+	CreatePool(pool, 1)
+}
+
+func TestCreatePoolData( t *testing.T) {
+	pd := PoolData{}
+	pd.CreationDate = 312313123
+	pd.LastModDate = 321321313
+
+	stopwatchId := int64(1)
+
+	id := CreatePoolData( pd, &stopwatchId)
+	if id == 0 {
+		t.Fatal("Id must automatically increment")
+	}
+}
+
+func TestUpdatePoolData(t *testing.T) {
+	stopwatches := make([]Stopwatch, 0, 16)
+
+	stopwatch := Stopwatch{}
+	stopwatch.Id = 1
+	stopwatch.Color = "#fff"
+	stopwatch.Name = "hello"
+
+	stopwatches = append( stopwatches, stopwatch )
+
+	unix := time.Now().Unix()
+	poolData := PoolData{}
+	poolData.LastModDate = unix
+	poolData.Stopwatches = stopwatches
+
+	p := Pool{}
+	p.PoolKey = "dasdas3123"
+
+	stopwatchId := int64(2)
+	res := UpdatePoolData(p, poolData, &stopwatchId)
+	if res == 0 {
+		t.Fatal("Must return non zero value")
+	}
 }
 
 func TestLoadPool( t *testing.T) {

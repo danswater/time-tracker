@@ -81,7 +81,7 @@ func SaveStopwatch(stopwatch Stopwatch, intervalId int64) int64 {
 	return int64(sid);
 }
 
-func SavePoolData(poolData PoolData, stopwatchId *int64) int64 {
+func CreatePoolData(poolData PoolData, stopwatchId *int64) int64 {
 	statement, err := database.Prepare("INSERT INTO pool_datas (CreationDate, LastModDate, StopwatchId) VALUES (?,?,?)")
 	if err != nil {
 		log.Fatal("Invalid insert query", err)
@@ -89,22 +89,63 @@ func SavePoolData(poolData PoolData, stopwatchId *int64) int64 {
 
 	creationDate := poolData.CreationDate
 	lastModDate := poolData.LastModDate
-	log.Println("Saving pool data", poolData)
+	log.Println("Creating pool data", poolData)
 	res, errExec := statement.Exec(creationDate, lastModDate, stopwatchId)
 	if errExec != nil {
-		log.Panic("Unable to save pool data", errExec)
+		log.Panic("Unable to create pool data", errExec)
 	}
 
 	id, _ := res.LastInsertId()
 	return id;
 }
 
-func SavePool(pool Pool) {
-	if len(pool.PoolData.Stopwatches) > 0 {
+func UpdatePoolData(pool Pool, poolData PoolData, stopwatchId *int64) int64 {
+	rows, errSelect := database.Query("SELECT PoolDataId FROM pools WHERE poolKey = ?", pool.PoolKey)
+	if errSelect != nil {
+		log.Fatal("Unable to execute pool query", errSelect)
 	}
 
-	poolDataId := SavePoolData(pool.PoolData, nil)
+	var poolDataId int64
+	for rows.Next() {
+		var PoolDataId int64
+		rows.Scan(&PoolDataId)
+		poolDataId = PoolDataId
+	}
 
+	statement, err := database.Prepare("UPDATE pool_datas SET CreationDate = ?, LastModDate = ?, StopwatchId = ? WHERE Id = ?")
+	if err != nil {
+		log.Fatal("Invalid updating query", err)
+	}
+
+	creationDate := poolData.CreationDate
+	lastModDate := poolData.LastModDate
+	log.Println("Updating pool data", poolData)
+	_, errExec := statement.Exec(creationDate, lastModDate, stopwatchId, poolDataId)
+	if errExec != nil {
+		log.Panic("Unable to update pool data", errExec)
+	}
+
+	return poolDataId;
+}
+
+func UpdatePool(pool Pool, poolDataId int64) {
+	statement, err := database.Prepare("UPDATE pools SET EventName = ?, IsReadOnly = ?, Message = ?, PoolDataId = ? WHERE PoolKey = ?")
+	if err != nil {
+		log.Fatal("Invalid update query", err)
+	}
+
+	eventName := pool.EventName
+	isReadOnly := pool.IsReadOnly
+	message := pool.Message
+	poolKey := pool.PoolKey
+	log.Println("Updating pool",pool)
+	_, errExec := statement.Exec(eventName, isReadOnly, message, poolDataId, poolKey)
+	if errExec != nil {
+		log.Fatal("Invalid update query", errExec)
+	}
+}
+
+func CreatePool(pool Pool, poolDataId int64) {
 	statement, err := database.Prepare("INSERT INTO pools (EventName, IsReadOnly, Message, PoolDataId, PoolKey, PoolKeyReadOnly) VALUES (?,?,?,?,?,?)")
 	if err != nil {
 		log.Fatal("Invalid insert query", err)
@@ -115,7 +156,7 @@ func SavePool(pool Pool) {
 	message := pool.Message
 	poolKey := pool.PoolKey
 	PoolKeyReadOnly := pool.PoolKeyReadOnly
-	log.Println("Saving pool",pool)
+	log.Println("Creating pool",pool)
 	_, errExec := statement.Exec(eventName, isReadOnly, message, poolDataId, poolKey, PoolKeyReadOnly)
 	if errExec != nil {
 		log.Fatal("Invalid insert query", errExec)
