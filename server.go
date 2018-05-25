@@ -11,6 +11,23 @@ import (
 	"math/rand"
 )
 
+//Custom server which basically only contains a socketio variable
+//But we need it to enhance it with functions
+type customServer struct {
+	Server *socketio.Server
+}
+
+//Header handling, this is necessary to adjust security and/or header settings in general
+//Please keep in mind to adjust that later on in a productive environment!
+//Access-Control-Allow-Origin will be set to whoever will call the server
+func (s *customServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	origin := r.Header.Get("Origin")
+	w.Header().Set("Access-Control-Allow-Origin", origin)
+	s.Server.ServeHTTP(w, r)
+}
+
+
 // StartServer : start new server
 func StartServer() {
 	// TODO ML Refactor into multiple files
