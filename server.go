@@ -61,33 +61,28 @@ func SocketHandler(so socketio.Socket) {
 		json.Unmarshal([]byte(msg), &event)
 
 		if event.Payload == "NEW" {
-			// send poolNew
+			// create pool data
 			unix := time.Now().Unix()
-			poolData := PoolData{}
-			poolData.CreationDate = unix
-			poolData.LastModDate = unix
+			rawPd := NewPoolData(unix, unix)
+			pd := CreatePoolData(rawPd)
 
-			poolDataId := CreatePoolData(poolData, nil)
+			// create pool
+			rawp := NewPool("poolNew", false, "", pd, randomString(), randomString())
+			p := CreatePool(rawp)
 
-			pool := Pool{}
-			pool.EventName = "poolNew"
-			pool.IsReadOnly = false
-			pool.PoolData = poolData
-			pool.PoolKey = randomString()
-			pool.PoolKeyReadOnly = randomString()
-
-			CreatePool(pool, poolDataId)
-
-			res, _ := json.Marshal(pool)
+			// emit pool new
+			res, _ := json.Marshal(p)
 			so.Emit("poolNew", string(res))
 			so.BroadcastTo("Stopwatch", "poolNew", string(res))
 		} else {
+			// load pool
 			p := Pool{}
 			p.PoolKey = event.Payload
 
 			pool := LoadPool(p)
 			pool.EventName = "subscribeAccepted"
 
+			// emit subscribe accepted
 			res, _ := json.Marshal(pool)
 			so.Emit( "subscribeAccepted", string(res))
 			so.BroadcastTo("Stopwatch", "subscribeAccepted", string(res))
@@ -100,44 +95,67 @@ func SocketHandler(so socketio.Socket) {
 		event := Event{}
 		json.Unmarshal([]byte(msg), &event)
 
-		// send poolChanged
-		intervals := make([]Interval, 0, 16)
+		// load pool
+		refP := Pool{}
+		refP.PoolKey = event.Payload
+		refPool := LoadPool(refP)
 
-		interval := Interval{}
-		interval.StartTime = event.Time
+		// create stopwatch with intervalid
+		rawSp := NewStopwatch(event.Id, event.Color, event.Name)
+		sp := CreateStopwatch(rawSp)
 
-		intervalId := SaveInterval(interval)
+		// create interval
+		rawI := NewInterval(sp.Id, event.Time, 0)
+		CreateInterval(rawI)
 
-		intervals = append( intervals, interval )
-
-		stopwatches := make([]Stopwatch, 0, 16)
-
-		stopwatch := Stopwatch{}
-		stopwatch.Id = event.Id
-		stopwatch.Color = event.Color
-		stopwatch.Name = event.Name
-		stopwatch.Intervals = intervals
-
-		stopwatchId := SaveStopwatch(stopwatch, intervalId)
-
-		stopwatches = append( stopwatches, stopwatch )
-
+		// load and update pool data with stopwatch
+		pd := LoadPoolData(refPool.PoolData.Id)
 		unix := time.Now().Unix()
-		poolData := PoolData{}
-		poolData.LastModDate = unix
-		poolData.Stopwatches = stopwatches
+		pd.LastModDate = unix
+		pd.StopwatchId = sp.Id
+		UpdatePoolData(pd)
 
+		// load pool
 		p := Pool{}
 		p.PoolKey = event.Payload
-
-		UpdatePoolData(p, poolData, &stopwatchId)
 
 		pool := LoadPool(p)
 		pool.EventName = "poolChanged"
 
+		// emit pool changed
 		res, _ := json.Marshal(pool)
+		so.Emit("poolChanged", string(res))
+		so.BroadcastTo("Stopwatch", "poolChanged", string(res))
+	})
 
-		log.Println("sending data as poolChanged", msg)
+	so.On("entityStop", func(msg string) {
+		log.Println("received", msg)
+
+		event := Event{}
+		json.Unmarshal([]byte(msg), &event)
+
+		// load and update interval stoptime
+		id := int64(event.Id)
+		i := LoadInterval(id)
+		i.StopTime = event.Time
+
+		UpdateInterval(i)
+
+		// load and update pool data with stopwatch
+		pd := LoadPoolDataByStopwatchId(int64(i.StopwatchId))
+		unix := time.Now().Unix()
+		pd.LastModDate = unix
+		UpdatePoolData(pd)
+
+		// load pool
+		p := Pool{}
+		p.PoolKey = event.Payload
+
+		pool := LoadPool(p)
+		pool.EventName = "poolChanged"
+
+		// emit pool changed
+		res, _ := json.Marshal(pool)
 		so.Emit("poolChanged", string(res))
 		so.BroadcastTo("Stopwatch", "poolChanged", string(res))
 	})

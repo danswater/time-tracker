@@ -3,25 +3,25 @@
 -- for an interesting explanation of SQLites datatypes, in particular affinities.
 
 CREATE TABLE IF NOT EXISTS intervals (
-	Id        INTEGER PRIMARY KEY AUTOINCREMENT,
-	StartTime BIGINT,
-	StopTime  BIGINT
+	Id          INTEGER PRIMARY KEY AUTOINCREMENT,
+	StopwatchId INTEGER,
+	StartTime   BIGINT,
+	StopTime    BIGINT,
+
+	FOREIGN KEY(StopwatchId) REFERENCES stopwatches(Id)
 );
 
 CREATE TABLE IF NOT EXISTS stopwatches (
-	Id         INTEGER PRIMARY KEY,
-	Color      VARCHAR(255),
-	IntervalId INTEGER,
-	Name       VARCHAR(255),
-
-	FOREIGN KEY(IntervalId) REFERENCES intervals(Id)
+	Id    INTEGER PRIMARY KEY,
+	Color VARCHAR(255),
+	Name  VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS pool_datas (
 	Id           INTEGER PRIMARY KEY AUTOINCREMENT,
 	CreationDate BIGINT,
 	LastModDate  BIGINT,
-	StopwatchId  INTEGER,
+	StopwatchId  INTEGER DEFAULT 0,
 
 	FOREIGN KEY(StopwatchId) REFERENCES stopwatches(Id)
 );

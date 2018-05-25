@@ -1,13 +1,14 @@
 <!doctype html>
 <html>
 	<head>
-		<title>Socket.IO chat</title>
+		<title>Time tracker</title>
 		<style>
 			* { margin: 0; padding: 0; box-sizing: border-box; }
 			body { font: 13px Helvetica, Arial; }
 			form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
 			form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-			form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+			form button#start { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+			form button#stop { width: 9%; background: rgb(255, 130, 130); border: none; padding: 10px; }
 			#messages { list-style-type: none; margin: 0; padding: 0; }
 			#messages li { padding: 5px 10px; }
 			#messages li:nth-child(odd) { background: #eee; }
@@ -22,7 +23,8 @@
 				<span id="seconds">0.0</span>
 			</div>
 			<form action="">
-				<button>Start Track</button>
+				<button id="start">Start Track</button>
+				<button id="stop">Stop Track</button>
 			</form>
 			<script src="GoTime.js"></script>
 			<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
@@ -34,9 +36,11 @@
 					var rString   = randomString();
 					var delay     = 61;
 					var cookieKey = 'poolKey';
+					var intervalId = 0;
 
 					init();
-					$( 'form' ).submit( handleForm );
+					$( '#start' ).click( handleForm );
+					$( '#stop' ).click( handleStop );
 					socket.on( 'poolNew', handlePoolNew );
 					socket.on( 'poolChanged', handlePoolChanged );
 					socket.on( 'subscribeAccepted', handleSubscribeAccepted );
@@ -52,6 +56,12 @@
 						return false;
 					}
 
+					function handleStop ( e ) {
+						e.preventDefault();
+						newEvent( 'entityStop', intervalId, GoTime.now(), null, getCookie( cookieKey ), null );
+						return false;
+					}
+
 					function handlePoolNew ( msg ) {
 						var pool = JSON.parse( msg );
 						updatePoolURL( pool.PoolKey );
@@ -60,79 +70,79 @@
 
 					function handlePoolChanged ( msg ) {
 						var pool = JSON.parse( msg );
-						var data = pool.PoolData.Stopwatches[ 0 ];
-						i( data, GoTime.now() );
+						var data = pool.PoolData.Stopwatch;
+						render( data, GoTime.now() );
 						setInterval( function () {
-							i( data, GoTime.now() );
+							render( data, GoTime.now() );
 						}, delay );
 					}
 
 					function handleSubscribeAccepted ( msg ) {
 						var pool = JSON.parse( msg );
-						console.log( pool );
-						if ( pool.PoolData.Stopwatches ) {
-							var data = pool.PoolData.Stopwatches[ 0 ];
-							i( data, GoTime.now() );
+						if ( pool.PoolData.Stopwatch ) {
+							var data = pool.PoolData.Stopwatch;
+							render( data, GoTime.now() );
 							setInterval( function () {
-								i( data, GoTime.now() );
+								render( data, GoTime.now() );
 							}, delay );
 						}
 					}
 
-					function i ( J, I ) {
-						var K = w( J.Intervals, I );
-						var F = K.laps
-						var S = K.totalDuration;
-						var R = J.Intervals.length > 0 ? J.Intervals[J.Intervals.length - 1].StopTime : 1;
-						var M = moment.duration( S );
-						var B = S > 0;
-						var G = J.Name;
-						var O = R == 0;
-						var N = Math.floor( M.asDays() );
-						var L = M.hours();
-						var Q = M.minutes();
-						var A = M.asSeconds() % 60;
+					function render ( stopwatch, currentTime ) {
+						var time           = computeTime( stopwatch.Intervals, currentTime );
+						var laps           = time.laps
+						var totalDuration  = time.totalDuration;
+						var momentDuration = moment.duration( totalDuration );
+						var days           = Math.floor( momentDuration.asDays() );
+						var hours          = momentDuration.hours();
+						var minutes        = momentDuration.minutes();
+						var seconds        = momentDuration.asSeconds() % 60;
 
-						$( '#days' ).text( N );
-						$( '#hours' ).text( L );
-						$( '#minutes' ).text( Q );
-						$( '#seconds' ).text( displaySeconds( A ) );
+						$( '#days' ).text( days );
+						$( '#hours' ).text( hours );
+						$( '#minutes' ).text( minutes );
+						$( '#seconds' ).text( displaySeconds( seconds ) );
 					}
 
-					function w ( F, A ) {
-						var I = [];
-						var E = 0;
-						var H = 0;
-						var B = F.length;
-						for ( var G = 0; G < B; G++ ) {
-							var C = F[ G ];
-							var D = F[ G + 1 ];
+					function computeTime ( intervals, currentTime ) {
+						var laps          = [];
+						var duration      = 0;
+						var totalDuration = 0;
+						var length        = intervals.length;
 
-							if ( C.StopTime > 0 ) {
-								E += C.StopTime - C.StartTime
+
+						for ( var i = 0; i < length; i++ ) {
+							var interval     = intervals[ i ];
+							var nextInterval = intervals[ i + 1 ];
+
+							// this should not be global
+							intervalId = interval.Id
+
+							if ( interval.StopTime > 0 ) {
+								duration += interval.StopTime - interval.StartTime
 							} else {
-								E += A - C.StartTime
+								duration += currentTime - interval.StartTime
 							}
 
-							if ( D === undefined || D.StartTime === C.StopTime ) {
-								H += E;
-								I.push( r( E, H ) );
-								E = 0
+							if ( nextInterval === undefined || nextInterval.StartTime === interval.StopTime ) {
+								totalDuration += duration;
+								laps.push( buildLap( duration, totalDuration ) );
+								duration = 0
 							}
 						}
 
 						return {
-							laps: I,
-							totalDuration: H
+							laps          : laps,
+							totalDuration : totalDuration
 						}
 					}
 
-					function r ( B, A ) {
+					function buildLap ( duration, totalDuration ) {
 						return lap = {
-							Duration            : B,
-							DisplayDuration     : uniformLapTime( B ),
-							RunningTotal        : A,
-							DisplayRunningTotal : uniformLapTime( A )
+							Duration            : duration,
+							DisplayDuration     : uniformLapTime( duration ),
+							RunningTotal        : totalDuration,
+							DisplayRunningTotal : uniformLapTime( totalDuration )
 						}
 					}
 

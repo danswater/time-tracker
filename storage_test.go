@@ -13,91 +13,85 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestSaveInterval(t *testing.T) {
-	interval := Interval{}
-	interval.StartTime = 1526986686
-	interval.StopTime = 1526986702
-
-	id := SaveInterval(interval)
-	if id == 0 {
-		t.Fatal("Id must automatically increment")
-	}
-}
-
-func TestSaveStopwatch( t *testing.T) {
-	stopwatch := Stopwatch{}
-	stopwatch.Color = "#fff"
-	stopwatch.Id = 321321313
-	stopwatch.Name = "Hello"
-
-	intervalId := int64(1)
-	id := SaveStopwatch( stopwatch, intervalId)
-	if id == 0 {
-		t.Fatal("Id must automatically increment")
-	}
-}
-
 func TestCreatePool( t *testing.T) {
 	// send poolNew
-	unix := time.Now().Unix()
-	pd := PoolData{}
-	pd.CreationDate = unix
-	pd.LastModDate = unix
+	rawPd := PoolData{}
+	rawPd.Id = 1
 
-	pool := Pool{}
-	pool.EventName = "poolNew"
-	pool.IsReadOnly = false
-	pool.PoolData = pd
-	pool.PoolKey = "dasdas3123"
-	pool.PoolKeyReadOnly = "dsadsdasd43"
+	rawP := Pool{}
+	rawP.EventName = "poolNew"
+	rawP.IsReadOnly = false
+	rawP.PoolData = rawPd
+	rawP.PoolKey = "dasdas3123"
+	rawP.PoolKeyReadOnly = "dsadsdasd43"
 
-	CreatePool(pool, 1)
+	pool := CreatePool(rawP)
+	if pool.PoolKey != rawP.PoolKey {
+		t.Fatal("Both pool keys must be the same")
+	}
+}
+
+func TestLoadPool( t *testing.T) {
+	rawP := Pool{}
+	rawP.PoolKey = "dasdas3123"
+
+	pool := LoadPool(rawP)
+	if pool.EventName == "" {
+		t.Fatal("pool should contain event name")
+	}
 }
 
 func TestCreatePoolData( t *testing.T) {
-	pd := PoolData{}
-	pd.CreationDate = 312313123
-	pd.LastModDate = 321321313
+	rawPd := PoolData{}
+	rawPd.CreationDate = 312313123
+	rawPd.LastModDate = 321321313
 
-	stopwatchId := int64(1)
-
-	id := CreatePoolData( pd, &stopwatchId)
-	if id == 0 {
+	pd := CreatePoolData(rawPd)
+	if pd.Id == 0 {
 		t.Fatal("Id must automatically increment")
 	}
 }
 
 func TestUpdatePoolData(t *testing.T) {
-	stopwatches := make([]Stopwatch, 0, 16)
-
-	stopwatch := Stopwatch{}
-	stopwatch.Id = 1
-	stopwatch.Color = "#fff"
-	stopwatch.Name = "hello"
-
-	stopwatches = append( stopwatches, stopwatch )
-
 	unix := time.Now().Unix()
 	poolData := PoolData{}
+	poolData.Id = 1
 	poolData.LastModDate = unix
-	poolData.Stopwatches = stopwatches
 
-	p := Pool{}
-	p.PoolKey = "dasdas3123"
 
-	stopwatchId := int64(2)
-	res := UpdatePoolData(p, poolData, &stopwatchId)
-	if res == 0 {
+	res := UpdatePoolData(poolData)
+	if res.Id == 0 {
 		t.Fatal("Must return non zero value")
 	}
 }
 
-func TestLoadPool( t *testing.T) {
-	pool := Pool{}
-	pool.EventName = "poolNew"
-	pool.IsReadOnly = false
-	pool.PoolKey = "dasdas3123"
-	pool.PoolKeyReadOnly = "dsadsdasd43"
+func TestCreateStopwatch( t *testing.T) {
+	rawSp := Stopwatch{}
+	rawSp.Color = "#fff"
+	rawSp.Id = 321321313
+	rawSp.Name = "Hello"
 
-	LoadPool(pool)
+	sp := CreateStopwatch(rawSp)
+	if sp.Id == 0 {
+		t.Fatal("Id must automatically increment")
+	}
+}
+
+func TestLoadStopwatch( t *testing.T) {
+	sp := LoadStopwatch(321321313)
+	if sp.Id == 0 {
+		t.Fatal("Stopwatch should container more then 0")
+	}
+}
+
+func TestCreateInterval(t *testing.T) {
+	rawI := Interval{}
+	rawI.StopwatchId = 1
+	rawI.StartTime = 1526986686
+	rawI.StopTime = 1526986702
+
+	i := CreateInterval(rawI)
+	if i.Id == 0 {
+		t.Fatal("Id must automatically increment")
+	}
 }
